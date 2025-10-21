@@ -1,7 +1,7 @@
 // Simulación de base de datos de usuarios
 const users = {
-    'admin': { password: '123456', name: 'Administrador' },
-    'usuario': { password: '123456', name: 'Usuario' }
+    'admin': { password: '123', name: 'Administrador' },
+    'usuario': { password: '123', name: 'Usuario' }
 };
 
 // Verificar si el usuario está logueado
