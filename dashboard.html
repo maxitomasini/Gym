@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gym App</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h2>💪 Gym App</h2>
+        </div>
+        <div class="nav-user">
+            <span id="userWelcome">Bienvenido</span>
+            <button onclick="logout()" class="btn-secondary">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Sección Racha -->
+        <div class="card">
+            <h2>🔥 Tu Racha</h2>
+            <div class="streak-container">
+                <div class="streak-number" id="streakCount">0</div>
+                <p>días consecutivos entrenando</p>
+                <button onclick="markTrainingDone()" class="btn-primary" id="markTrainingBtn">
+                    ✅ Marcar entrenamiento de hoy
+                </button>
+            </div>
+        </div>
+
+        <!-- Botones de Navegación -->
+        <div class="navigation-grid">
+            <button class="nav-card" onclick="showSection('routines')">
+                <h3>📋 Mis Rutinas</h3>
+                <p>Gestiona tus rutinas de entrenamiento</p>
+            </button>
+            
+            <button class="nav-card" onclick="showSection('loads')">
+                <h3>🏋️ Cargas</h3>
+                <p>Registra y actualiza tus pesos</p>
+            </button>
+            
+            <button class="nav-card" onclick="showSection('progress')">
+                <h3>📊 Trayectoria</h3>
+                <p>Ver tu progreso en gráficos</p>
+            </button>
+        </div>
+
+        <!-- Sección Rutinas -->
+<div id="routines-section" class="section hidden">
+    <div class="card">
+        <h2>📋 Mi Rutina Semanal</h2>
+        
+        <!-- Estado de la rutina -->
+        <div id="routineState" class="routine-state">
+            <div id="noRoutineMessage" class="no-routine-message">
+                <p>No tienes una rutina guardada.</p>
+                <button onclick="showRoutineForm()" class="btn-primary">➕ Crear Rutina</button>
+            </div>
+            
+            <div id="savedRoutine" class="saved-routine hidden">
+                <h3>Tu Rutina Actual</h3>
+                <div id="routinePreview" class="routine-preview">
+                    <!-- Aquí se mostrará la rutina guardada -->
+                </div>
+                <div class="routine-actions">
+                    <button onclick="showRoutineForm()" class="btn-primary">✏️ Editar Rutina</button>
+                    <button onclick="deleteRoutine()" class="btn-secondary">🗑️ Eliminar Rutina</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario para crear/editar rutina -->
+        <div id="routineForm" class="routine-form hidden">
+            <h3>Crear/Editar Rutina Semanal</h3>
+            
+            <div class="routine-table-container">
+                <table class="routine-table">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>Ejercicios</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="routineTableBody">
+                        <!-- Los días se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="routine-form-actions">
+                <button onclick="saveRoutine()" class="btn-primary">💾 Guardar Rutina</button>
+                <button onclick="cancelEdit()" class="btn-secondary">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Sección Cargas -->
+<div id="loads-section" class="section hidden">
+    <div class="card">
+        <h2>🏋️ Mis Cargas</h2>
+        <div class="loads-form">
+            <div class="form-group">
+                <label for="exerciseSelectLoad">Ejercicio:</label>
+                <select id="exerciseSelectLoad" class="exercise-select-load">
+                    <option value="">Selecciona un ejercicio</option>
+                    <!-- Los ejercicios se cargarán dinámicamente -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="exerciseWeight">Peso (kg):</label>
+                <input type="number" id="exerciseWeight" placeholder="Ej: 80" min="0" step="0.5">
+            </div>
+            <button onclick="addExercise()" class="btn-primary">➕ Agregar/Actualizar Ejercicio</button>
+        </div>
+        
+        <div id="exercisesList" class="exercises-container">
+            <!-- Aquí se mostrarán los ejercicios -->
+        </div>
+    </div>
+</div>
+
+       <!-- Sección Progreso -->
+<div id="progress-section" class="section hidden">
+    <div class="card">
+        <h2>📊 Mi Progreso</h2>
+        
+        <!-- Selector de vista -->
+        <div class="chart-controls">
+            <div class="form-group">
+                <label for="chartViewSelect">Vista del gráfico:</label>
+                <select id="chartViewSelect" onchange="changeChartView()">
+                    <option value="all">Todos los ejercicios</option>
+                    <option value="individual">Ejercicio individual</option>
+                </select>
+            </div>
+            
+            <!-- Selector de ejercicio individual (oculto por defecto) -->
+            <div class="form-group" id="individualExerciseGroup" style="display: none;">
+                <label for="exerciseSelect">Seleccionar Ejercicio:</label>
+                <select id="exerciseSelect" onchange="updateIndividualChart()">
+                    <option value="">Selecciona un ejercicio</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contenedor del gráfico -->
+        <div class="chart-container">
+            <canvas id="progressChart"></canvas>
+        </div>
+
+        <!-- Mensaje cuando no hay datos -->
+        <div id="noDataMessage" class="no-data-message hidden">
+            <p>No hay datos de progreso para mostrar.</p>
+            <p>¡Ve a la sección <strong>Cargas</strong> y agrega algunos ejercicios!</p>
+        </div>
+
+        <!-- Mini gráficos para cada ejercicio -->
+        <div id="miniChartsContainer" class="mini-charts-container">
+            <!-- Los mini gráficos se generarán dinámicamente -->
+        </div>
+    </div>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>
+    // Registrar Service Worker en todas las páginas
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('Service Worker registrado:', registration.scope);
+            })
+            .catch(function(error) {
+                console.log('Error al registrar Service Worker:', error);
+            });
+    }
+</script>
+</body>
+</html>

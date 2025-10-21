@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym App</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Aplicación para seguimiento de entrenamiento y rutinas de gym">
+    <meta name="keywords" content="gym, entrenamiento, rutinas, ejercicios, fitness, pesas">
+    <meta name="author" content="Gym App">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Gym App">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="icons/icon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="icons/icon-16x16.png" sizes="16x16">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- PWA Installation Styles -->
+    <style>
+        .install-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: none;
+        }
+        
+        .install-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        .install-button:active {
+            transform: translateY(0);
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .pwa-features {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 10001;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .pwa-features h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+        
+        .pwa-features ul {
+            text-align: left;
+            margin: 20px 0;
+            color: #718096;
+        }
+        
+        .pwa-features li {
+            margin: 10px 0;
+            padding-left: 10px;
+        }
+        
+        .close-features {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de carga -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Cargando Gym App...</div>
+    </div>
+
+    <!-- Botón de instalación PWA -->
+    <button class="install-button" id="installButton">
+        📱 Instalar App
+    </button>
+
+    <!-- Información de características PWA -->
+    <div class="pwa-features" id="pwaFeatures">
+        <h3>🚀 ¡Instala Gym App!</h3>
+        <p>Disfruta de estas ventajas instalando la aplicación:</p>
+        <ul>
+            <li>✅ Acceso rápido desde el escritorio</li>
+            <li>✅ Funciona sin conexión a internet</li>
+            <li>✅ Experiencia como app nativa</li>
+            <li>✅ Pantalla completa sin distracciones</li>
+            <li>✅ Carga más rápida</li>
+        </ul>
+        <button class="close-features" id="closeFeatures">¡Entendido!</button>
+    </div>
+
+    <script>
+        // Variables globales
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const pwaFeatures = document.getElementById('pwaFeatures');
+        const closeFeatures = document.getElementById('closeFeatures');
+
+        // Ocultar pantalla de carga después de 2 segundos
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 2000);
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('✅ Service Worker registrado con éxito:', registration.scope);
+                        
+                        // Verificar si hay actualizaciones
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('🔄 Nueva versión de Service Worker encontrada');
+                            
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('📦 Nueva versión disponible. Recarga para actualizar.');
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log('❌ Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+
+        // Detectar evento de instalación PWA
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botón de instalación después de 3 segundos
+            setTimeout(() => {
+                installButton.style.display = 'block';
+                
+                // Mostrar información de características la primera vez
+                const hasSeenFeatures = localStorage.getItem('hasSeenPWAFeatures');
+                if (!hasSeenFeatures) {
+                    setTimeout(() => {
+                        pwaFeatures.style.display = 'block';
+                    }, 1000);
+                }
+            }, 3000);
+        });
+
+        // Instalar aplicación
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ Usuario aceptó instalar la app');
+                        installButton.style.display = 'none';
+                        
+                        // Mostrar mensaje de éxito
+                        showNotification('¡App instalada correctamente! 🎉');
+                    } else {
+                        console.log('❌ Usuario rechazó instalar la app');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Cerrar información de características
+        closeFeatures.addEventListener('click', () => {
+            pwaFeatures.style.display = 'none';
+            localStorage.setItem('hasSeenPWAFeatures', 'true');
+        });
+
+        // Mostrar notificación
+        function showNotification(message) {
+            // Verificar si las notificaciones están soportadas
+            if (!("Notification" in window)) {
+                console.log("Este navegador no soporta notificaciones");
+                return;
+            }
+
+            // Verificar permisos de notificación
+            if (Notification.permission === "granted") {
+                createNotification(message);
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        createNotification(message);
+                    }
+                });
+            }
+        }
+
+        function createNotification(message) {
+            const options = {
+                body: message,
+                icon: 'icons/icon-192x192.png',
+                badge: 'icons/icon-72x72.png',
+                tag: 'gym-app-install'
+            };
+            
+            new Notification('Gym App', options);
+        }
+
+        // Detectar si la app se está ejecutando en modo standalone (instalada)
+        window.addEventListener('load', () => {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('📱 Ejecutándose en modo PWA instalado');
+                document.body.classList.add('pwa-mode');
+            }
+        });
+
+        // Redirigir basado en autenticación
+        function checkAuthAndRedirect() {
+            const token = localStorage.getItem('gym_token');
+            const user = localStorage.getItem('gym_user');
+            
+            // Simular un pequeño delay para la experiencia de carga
+            setTimeout(() => {
+                if (token && user) {
+                    console.log('🔑 Usuario autenticado, redirigiendo al dashboard...');
+                    window.location.href = 'dashboard.html';
+                } else {
+                    console.log('🚪 Usuario no autenticado, redirigiendo al login...');
+                    window.location.href = 'login.html';
+                }
+            }, 1000);
+        }
+
+        // Asignar evento al botón de instalación
+        installButton.addEventListener('click', installApp);
+
+        // Iniciar verificación de autenticación
+        checkAuthAndRedirect();
+
+        // Detectar cambios de conexión
+        window.addEventListener('online', () => {
+            console.log('🌐 Conexión restaurada');
+            showNotification('Conexión a internet restaurada');
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('📴 Sin conexión a internet');
+            showNotification('Estás trabajando sin conexión');
+        });
+
+        // Prevenir comportamiento por defecto en enlaces
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('a');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.getAttribute('target') !== '_blank') {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+
+        // Manejar errores no capturados
+        window.addEventListener('error', function(e) {
+            console.error('❌ Error no capturado:', e.error);
+        });
+
+        // Log cuando la app está completamente cargada
+        window.addEventListener('load', () => {
+            console.log('🚀 Gym App completamente cargada');
+            console.log('📊 Características soportadas:');
+            console.log('   Service Worker:', 'serviceWorker' in navigator);
+            console.log('   PWA Install:', 'BeforeInstallPromptEvent' in window);
+            console.log('   Notifications:', 'Notification' in window);
+            console.log('   Storage:', 'localStorage' in window);
+        });
+    </script>
+</body>
+</html>
